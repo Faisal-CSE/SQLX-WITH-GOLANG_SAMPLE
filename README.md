@@ -34,6 +34,19 @@ SELECT
 		GROUP BY users.id
 ```
 
+### With Total Count
+```sql
+SELECT
+			users.id,
+			users.username,
+			COALESCE(json_agg(json_build_object('address_id', address.id, 'user_id', address.user_id, 'city', address.city)), '[]') AS addresses,
+			count(*)over()as total_count
+		FROM users
+		LEFT JOIN address ON users.id = address.user_id
+		GROUP BY users.id
+```
+
+
 ---
 
 ### By user ID
