@@ -1,2 +1,90 @@
 # SQLX-WITH-GOLANG_SAMPLE
 SQLX with golang and PostgreSQL sample 
+
+### FOR Nested 
+```sql
+SELECT 
+			users.id,
+			users.username,
+			COALESCE(json_agg(json_build_object('address_id', address.id, 'user_id', address.user_id, 'city', address.city)), '[]') AS addresses
+		FROM users
+		LEFT JOIN address ON users.id = address.user_id
+		GROUP BY users.id
+```
+
+### Another Wat
+```go
+type User struct {
+	ID        int       `db:"id" json:"id"`
+	Username  string    `db:"username" json:"username"`
+	Addresses []Address `json:"addresses"`
+}
+
+type Address struct {
+	ID     int    `db:"address_id" json:"address_id"`
+	UserID int    `db:"user_id" json:"user_id"`
+	City   string `db:"city" json:"city"`
+}
+
+func DbFunction(cfg *config.Config) {
+	db, err := sqlx.Connect("pgx", fmt.Sprintf(cfg.PGDatabaseUrl, cfg.PGDatabasePassword))
+	if err != nil {
+		log.Error().Err(err)
+	}
+	defer db.Close()
+
+	var usersWithAddresses []User
+
+	query := `
+		SELECT 
+			users.id,
+			users.username,
+			address.id AS address_id,
+			user_id,
+			city
+		FROM users
+		LEFT JOIN address ON users.id = address.user_id
+	`
+
+	rows, err := db.Queryx(query)
+	if err != nil {
+		log.Err(err)
+	}
+	defer rows.Close()
+
+	userAddressMap := make(map[int]User)
+
+	for rows.Next() {
+		var user User
+		var address Address
+
+		err := rows.Scan(&user.ID, &user.Username, &address.ID, &address.UserID, &address.City)
+		if err != nil {
+			log.Err(err)
+		}
+
+		// Check if the user is already in the map
+		if existingUser, ok := userAddressMap[user.ID]; ok {
+			// Append the address to the existing user
+			existingUser.Addresses = append(existingUser.Addresses, address)
+			userAddressMap[user.ID] = existingUser
+		} else {
+			// Add a new user with the current address
+			user.Addresses = append(user.Addresses, address)
+			userAddressMap[user.ID] = user
+		}
+	}
+
+	// Convert the map values to a slice
+	for _, user := range userAddressMap {
+		usersWithAddresses = append(usersWithAddresses, user)
+	}
+
+	jsonResponse, err := json.MarshalIndent(usersWithAddresses, "", "  ")
+	if err != nil {
+		log.Err(err)
+	}
+
+	fmt.Println(string(jsonResponse))
+}
+```
