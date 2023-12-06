@@ -34,16 +34,9 @@ SELECT
 		GROUP BY users.id
 ```
 
-```sql
-SELECT
-			users.id,
-			users.username,
-			COALESCE(array_agg(address.id) FILTER(WHERE address.id IS NOT NULL), '{}') AS address_ids,
-			COALESCE(array_agg(address.city) FILTER(WHERE address.city IS NOT NULL), '{}') AS cities
-		FROM users
-		LEFT JOIN address ON users.id = address.user_id
-		GROUP BY users.id
-```
+---
+
+### By user ID
 
 ```sql
 SELECT
@@ -55,6 +48,20 @@ SELECT
 		WHERE users.id = 4
 		GROUP BY users.id
 ```
+
+---
+
+```sql
+SELECT
+			users.id,
+			users.username,
+			COALESCE(array_agg(address.id) FILTER(WHERE address.id IS NOT NULL), '{}') AS address_ids,
+			COALESCE(array_agg(address.city) FILTER(WHERE address.city IS NOT NULL), '{}') AS cities
+		FROM users
+		LEFT JOIN address ON users.id = address.user_id
+		GROUP BY users.id
+```
+
 
 
 ---
