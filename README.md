@@ -45,6 +45,18 @@ SELECT
 		GROUP BY users.id
 ```
 
+```sql
+SELECT
+			users.id,
+			users.username,
+			COALESCE(json_agg(json_build_object('address_id', address.id, 'user_id', address.user_id, 'city', address.city)), '[]') AS addresses
+		FROM users
+		LEFT JOIN address ON users.id = address.user_id
+		WHERE users.id = 4
+		GROUP BY users.id
+```
+
+
 ---
 
 ### Another Wat
@@ -123,3 +135,67 @@ func DbFunction(cfg *config.Config) {
 	fmt.Println(string(jsonResponse))
 }
 ```
+
+### Output Json Response
+```json
+[
+   {
+      "id":1,
+      "username":"Porag",
+      "addresses":[
+         {
+            "address_id":1,
+            "user_id":1,
+            "city":"Dhaka"
+         },
+         {
+            "address_id":2,
+            "user_id":1,
+            "city":"Kishoreganj"
+         }
+      ]
+   },
+   {
+      "id":2,
+      "username":"Shoulin",
+      "addresses":[
+         {
+            "address_id":3,
+            "user_id":2,
+            "city":"Dhaka"
+         },
+         {
+            "address_id":4,
+            "user_id":2,
+            "city":"Bhagalpur"
+         }
+      ]
+   },
+   {
+      "id":3,
+      "username":"Faisal",
+      "addresses":[
+         {
+            "address_id":5,
+            "user_id":3,
+            "city":"Kishoreganj"
+         }
+      ]
+   },
+   {
+      "id":4,
+      "username":"Nusrath",
+      "addresses":[
+         {
+            "address_id":0,
+            "user_id":0,
+            "city":""
+         }
+      ]
+   }
+]
+```
+
+
+
+
