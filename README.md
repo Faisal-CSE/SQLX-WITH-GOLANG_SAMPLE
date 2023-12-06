@@ -1,7 +1,29 @@
 # SQLX-WITH-GOLANG_SAMPLE
 SQLX with golang and PostgreSQL sample 
 
-### FOR Nested 
+### Posrgres Table Schema
+```sql
+create table users
+(
+    id       serial
+        primary key,
+    username varchar(50) not null
+        unique
+);
+```
+
+```sql
+create table address
+(
+    id      serial
+        primary key,
+    user_id integer,
+    city    varchar(50) not null
+);
+```
+
+
+### FOR Nested Query
 ```sql
 SELECT 
 			users.id,
@@ -11,6 +33,19 @@ SELECT
 		LEFT JOIN address ON users.id = address.user_id
 		GROUP BY users.id
 ```
+
+```sql
+SELECT
+			users.id,
+			users.username,
+			COALESCE(array_agg(address.id) FILTER(WHERE address.id IS NOT NULL), '{}') AS address_ids,
+			COALESCE(array_agg(address.city) FILTER(WHERE address.city IS NOT NULL), '{}') AS cities
+		FROM users
+		LEFT JOIN address ON users.id = address.user_id
+		GROUP BY users.id
+```
+
+---
 
 ### Another Wat
 ```go
